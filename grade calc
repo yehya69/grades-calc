@@ -1,0 +1,443 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade Estimator - Clean Redesign</title>
+    <style>
+        /* --- GLOBAL STYLES --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #eef1f5; color: #333; }
+        .container { 
+            width: 700px; /* FIXED WIDTH for ultimate consistency */
+            margin: 20px auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 16px; /* Slightly rounder corners */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* Stronger shadow for depth */
+        }
+        h2 { 
+            display: flex;
+            align-items: center;
+            color: #007bff;
+            padding-bottom: 15px; 
+            border-bottom: 3px solid #007bff;
+            margin-bottom: 25px;
+            font-size: 2em;
+        }
+        
+        /* --- SUBJECT INPUT TABLE STYLES --- */
+        .subject-table-section {
+            padding: 0 5px; /* Internal padding */
+        }
+        .subject-header, .subject-row {
+            display: flex;
+            align-items: stretch; /* Stretch content vertically for clean rows */
+            font-size: 0.9em;
+        }
+        .subject-header { 
+            font-weight: bold; 
+            background-color: #d8ecff; /* Lighter blue header */
+            padding: 12px 10px; 
+            border-radius: 8px 8px 0 0; 
+            margin-bottom: 5px; 
+            color: #1a4f8a;
+        }
+        .subject-row {
+            margin-bottom: 8px;
+            padding: 5px 0;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+        
+        /* Column Widths: Guaranteed Alignment */
+        .subject-header > div, .subject-row > * {
+            padding: 0 5px; /* Consistent internal padding */
+        }
+
+        .subject-header > div:nth-child(1), 
+        .subject-row input:nth-child(1) { flex: 2.5; } /* Subject Name: Widest */
+        
+        .subject-header > div:nth-child(2), 
+        .subject-header > div:nth-child(3), 
+        .subject-header > div:nth-child(4),
+        .subject-row input:nth-child(2),
+        .subject-row input:nth-child(3),
+        .subject-row input:nth-child(4) { flex: 1; } /* Points Columns: Equal and flexible */
+        
+        .subject-row input { 
+            padding: 8px; 
+            border: 1px solid #c9d8e5; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+
+        /* Delete Button Sizing (Final, guaranteed fix) */
+        .subject-header > div:last-child {
+             flex: 0 0 30px; /* Narrow column header */
+             text-align: center;
+             padding-right: 0;
+        }
+        .subject-row .delete-btn {
+            flex: 0 0 30px; 
+            cursor: pointer; 
+            background: #f44336; 
+            color: white; 
+            border: none; 
+            padding: 6px 0;
+            border-radius: 4px; 
+            font-weight: bold; 
+            font-size: 0.85em;
+            margin-left: 5px; 
+            line-height: 1;
+            align-self: center; /* Vertically align button */
+        }
+
+        /* Add Button Styling */
+        #add-subject-btn { 
+            background: #28a745; /* Changed to green for adding */
+            color: white; 
+            border: none; 
+            padding: 8px 15px; 
+            border-radius: 50%; 
+            font-size: 20px; 
+            cursor: pointer; 
+            margin-top: 15px; 
+            width: 40px; 
+            height: 40px;
+            line-height: 20px;
+            text-align: center; 
+            display: inline-block;
+            box-shadow: 0 0 5px rgba(40, 167, 69, 0.4);
+            transition: background-color 0.2s;
+        }
+        #add-subject-btn:hover { background-color: #1e7e34; }
+        
+        /* --- SETTINGS & RESULTS STYLES --- */
+        .calc-area { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; }
+        .calc-area h3 { 
+            color: #555; 
+            border-left: 4px solid #007bff; 
+            padding-left: 10px; 
+            font-size: 1.5em; 
+            margin-bottom: 20px;
+        }
+        .input-group { margin-bottom: 18px; }
+        .input-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 1em; color: #007bff; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #c9d8e5; border-radius: 4px; box-sizing: border-box; font-size: 1em; }
+        .calc-area button {
+            background-color: #007bff; /* Main button blue */
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 15px;
+        }
+        .calc-area button:hover { background-color: #0056b3; }
+        
+        /* --- RESULTS LAYOUT --- */
+        #results { 
+            margin-top: 30px; 
+            padding: 20px; 
+            border: 1px solid #b3d9ff; 
+            border-radius: 10px; 
+            background-color: #f8fbff; 
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap; 
+            gap: 20px;
+        }
+        .result-section { 
+            flex-basis: calc(50% - 10px); 
+            min-width: 300px; 
+            padding: 15px; 
+            border: 1px solid #d0e0f0;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+        .result-section h4 { 
+            margin-top: 0; 
+            border-bottom: 2px solid #007bff; 
+            padding-bottom: 5px; 
+            color: #007bff;
+            font-size: 1.2em;
+        }
+        .result-item { 
+            margin-bottom: 10px; 
+            font-size: 1em; 
+            line-height: 1.4;
+            display: flex;
+            justify-content: space-between;
+        }
+        .result-item strong { 
+            font-size: 1.1em; 
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        /* Conditional Colors */
+        .color-green { background-color: #e6ffed; color: #1e8449; font-weight: 600; border: 1px solid #b7e3c3; } 
+        .color-red { background-color: #ffe6e6; color: #cc3333; font-weight: 600; border: 1px solid #f2b7b7; }   
+        
+        /* Overall Status Box */
+        .status-box { 
+            width: 100%;
+            padding: 15px; 
+            border-radius: 8px; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            font-size: 1.3em; 
+            font-weight: bold;
+        }
+        .status-box.pass { background-color: #4CAF50; color: white; }
+        .status-box.fail { background-color: #F44336; color: white; }
+        .status-box.chance { background-color: #FFC107; color: #333; }
+        
+        .error { color: #cc3333; margin-top: 10px; font-weight: bold; }
+        
+        /* Instructional Note Style */
+        .instruction-note {
+            background-color: #fffbe6;
+            border: 1px solid #ffe07f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.95em;
+            color: #5d4911;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>📚 Grade Tracker & Estimator</h2>
+        
+        <div class="subject-table-section">
+            <div class="subject-header">
+                <div>Subject Name</div>
+                <div>Total Possible Points</div>
+                <div>Min. Expected Points</div>
+                <div>Max. Expected Points</div>
+                <div class="delete-header">Del</div>
+            </div>
+
+            <div id="subjects-container"></div>
+        </div>
+
+        <button id="add-subject-btn">+</button>
+        <p id="error-message" class="error"></p>
+        
+        <div class="instruction-note">
+            💡Tip: If you are certain of a subject's points (e.g., a final grade is already recorded), enter the same value in both the [Minimum Expected Points] and [Maximum Expected Points] columns to lock in that score.
+        </div>
+        
+        <div class="calc-area">
+            <h3>System Settings & Calculation</h3>
+            
+            <div class="input-group">
+                <label for="gs-points">Overall Grading System Points (GS):</label>
+                <input type="number" id="gs-points" value="100" min="1" step="0.01" required>
+                <small>The max possible score on your final scale (e.g., 100 or 4.0).</small>
+            </div>
+            
+            <div class="input-group">
+                <label for="passing-threshold">Passing Percentage Required (out of 100%):</label>
+                <input type="number" id="passing-threshold" value="50" min="0" max="100" step="0.01" required>
+                <small>The minimum percentage required to achieve a passing grade.</small>
+            </div>
+            
+            <button onclick="runCalculations()">Calculate Final Estimates</button>
+
+            <div id="results">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA AND CONSTANTS ---
+        const MAX_SUBJECTS = 30;
+        let subjectCount = 0;
+        
+        // --- DOM ELEMENT REFERENCES ---
+        const subjectsContainer = document.getElementById('subjects-container');
+        const addButton = document.getElementById('add-subject-btn');
+        const errorMessage = document.getElementById('error-message');
+        const resultsDiv = document.getElementById('results');
+        
+        const gsInput = document.getElementById('gs-points');
+        const thresholdInput = document.getElementById('passing-threshold');
+
+        // --- SUBJECT MANAGEMENT FUNCTIONS ---
+
+        /**
+         * Creates and adds a new subject row to the table.
+         */
+        function addSubjectRow() {
+            if (subjectCount >= MAX_SUBJECTS) {
+                errorMessage.textContent = `Maximum limit of ${MAX_SUBJECTS} subjects reached.`;
+                return;
+            }
+            errorMessage.textContent = ''; 
+
+            const row = document.createElement('div');
+            row.className = 'subject-row';
+            row.id = `subject-row-${Date.now() + subjectCount}`; 
+
+            // IMPORTANT: Styles are controlled entirely by CSS now.
+            row.innerHTML = `
+                <input type="text" placeholder="Subject Name">
+                <input type="number" placeholder="Total Points" min="0" step="0.01">
+                <input type="number" placeholder="Min Expected" min="0" step="0.01">
+                <input type="number" placeholder="Max Expected" min="0" step="0.01">
+                <button class="delete-btn" onclick="deleteSubjectRow('${row.id}')">X</button>
+            `;
+
+            subjectsContainer.appendChild(row);
+            subjectCount++;
+        }
+
+        /**
+         * Deletes a subject row based on its ID.
+         * @param {string} rowId - The unique ID of the row to delete.
+         */
+        function deleteSubjectRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                subjectsContainer.removeChild(row);
+                subjectCount = subjectsContainer.querySelectorAll('.subject-row').length; 
+            }
+        }
+        
+        // --- UTILITY FUNCTIONS ---
+
+        /**
+         * Determines the color class (green/red) based on a percentage vs. threshold.
+         */
+        function getColorClass(percentage, threshold) {
+            return percentage >= threshold ? 'color-green' : 'color-red';
+        }
+
+        /**
+         * Determines the overall status box HTML based on min/max outcomes.
+         */
+        function getOverallStatusHtml(minPassed, maxPassed) {
+            if (minPassed && maxPassed) {
+                return `<div class="status-box pass">PASS 🎉 (No Risk of Failure)</div>`;
+            } else if (!minPassed && !maxPassed) {
+                return `<div class="status-box fail">FAILED 😔 (Expected Grade is Below Threshold)</div>`;
+            } else {
+                return `<div class="status-box chance">CHANCE OF FAILURE ⚠️ (Outcome Depends on Performance)</div>`;
+            }
+        }
+
+        // --- CORE CALCULATION AND DISPLAY LOGIC ---
+
+        function runCalculations() {
+            errorMessage.textContent = '';
+            
+            // 1. Get System Settings and Validate
+            const gsPoints = parseFloat(gsInput.value);
+            const passingThreshold = parseFloat(thresholdInput.value);
+            const rows = subjectsContainer.querySelectorAll('.subject-row');
+
+            if (rows.length === 0 || isNaN(gsPoints) || gsPoints <= 0 || isNaN(passingThreshold) || passingThreshold < 0 || passingThreshold > 100) {
+                 errorMessage.textContent = 'Please check subject entry and system settings (GS/Threshold).';
+                return;
+            }
+            
+            // 2. Aggregate Subject Totals (Tmn, TMn, TnS)
+            let Tmn = 0; 
+            let TMn = 0; 
+            let TnS = 0; 
+
+            for (const row of rows) {
+                const inputs = row.querySelectorAll('input');
+                const subjectName = inputs[0].value.trim() || 'Unnamed Subject';
+                const totalP = parseFloat(inputs[1].value);
+                const minE = parseFloat(inputs[2].value);
+                const maxE = parseFloat(inputs[3].value);
+
+                if (isNaN(totalP) || isNaN(minE) || isNaN(maxE) || minE > maxE || maxE > totalP || totalP <= 0) {
+                    errorMessage.textContent = `Error: Check subject points (Min <= Max <= Total) for '${subjectName}'.`;
+                    return;
+                }
+
+                Tmn += minE;
+                TMn += maxE;
+                TnS += totalP;
+            }
+            
+            if (TnS === 0) {
+                 errorMessage.textContent = 'Error: Total Possible Points (TnS) for all subjects cannot be zero.';
+                 return;
+            }
+
+            // 3. Perform Calculations
+            const minPct = Tmn / TnS; 
+            const maxPct = TMn / TnS; 
+            
+            const mn = minPct * gsPoints; 
+            const Mn = maxPct * gsPoints; 
+            const An = (mn + Mn) / 2;     
+
+            const minPct100 = minPct * 100;
+            const maxPct100 = maxPct * 100;
+            const avgPct100 = (minPct100 + maxPct100) / 2;
+
+            // 4. Status Checks
+            const minPassed = minPct100 >= passingThreshold;
+            const maxPassed = maxPct100 >= passingThreshold;
+            const avgPassed = avgPct100 >= passingThreshold;
+
+            // 5. Generate Organized HTML Output
+            
+            const overallStatusHtml = getOverallStatusHtml(minPassed, maxPassed);
+
+            const resultsHtml = `
+                ${overallStatusHtml}
+                <div class="result-section">
+                    <h4>Grade (Scaled to GS: ${gsPoints.toFixed(2)})</h4>
+                    
+                    <div class="result-item">
+                        <span>Expected Minimum Grade:</span>
+                        <strong class="${getColorClass(minPct100, passingThreshold)}">${mn.toFixed(2)}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>Expected Maximum Grade:</span>
+                        <strong class="${getColorClass(maxPct100, passingThreshold)}">${Mn.toFixed(2)}</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>Average Grade:</span>
+                        <strong class="${getColorClass(avgPct100, passingThreshold)}">${An.toFixed(2)}</strong>
+                    </div>
+                </div>
+                
+                <div class="result-section">
+                    <h4>Percentage (Out of 100%)</h4>
+                    
+                    <div class="result-item">
+                        <span>Expected Minimum Percentage:</span>
+                        <strong class="${getColorClass(minPct100, passingThreshold)}">${minPct100.toFixed(2)} / 100%</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>Expected Maximum Percentage:</span>
+                        <strong class="${getColorClass(maxPct100, passingThreshold)}">${maxPct100.toFixed(2)} / 100%</strong>
+                    </div>
+                    <div class="result-item">
+                        <span>Expected Average Percentage:</span>
+                        <strong class="${getColorClass(avgPct100, passingThreshold)}">${avgPct100.toFixed(2)} / 100%</strong>
+                    </div>
+                </div>
+            `;
+
+            resultsDiv.innerHTML = resultsHtml;
+        }
+
+        // --- INITIALIZATION ---
+        addSubjectRow();
+        addButton.addEventListener('click', addSubjectRow);
+
+    </script>
+</body>
+</html>
